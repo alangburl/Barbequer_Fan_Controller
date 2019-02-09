@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import (QApplication, QPushButton,QWidget,
                              QSizePolicy,QVBoxLayout,QLineEdit,
                             QProgressBar,QMessageBox,QDial,QGridLayout,
                             QLCDNumber,QRadioButton,QLabel)
-from PyQt5.QtGui import QFont,QIcon
-from PyQt5.QtCore import QThread,pyqtSignal,Qt
+from PyQt5.QtGui import QFont,QIcon,QPainter,QColor,QPen
+from PyQt5.QtCore import QThread,pyqtSignal,Qt,QPoint
 
 
 class Window(QWidget):
@@ -71,7 +71,15 @@ class Window(QWidget):
         self.timer_button=QPushButton('Timer',self)
         self.timer_button.setSizePolicy(self.size_policy[0],self.size_policy[1])
         self.timer_button.setFont(self.font)
-        self.timer_button.setToolTip('Cook Time')       
+        self.timer_button.setToolTip('Cook Time')  
+        
+        qp=QPainter()
+        qp.begin(self)
+        qp.setPen(QPen(QColor(255,80,0), 3)) 
+        qp.setBrush(QColor(255,80,0))
+        qp.drawEllipse(QPoint(50,60),30,30) 
+        qp.end()
+        
         
         #add the grid layout to the interface
         self.layout=QGridLayout(self)
@@ -84,13 +92,16 @@ class Window(QWidget):
         self.layout.addWidget(self.intake_fan,4,1)
         self.layout.addWidget(self.start_button,5,0)
         self.layout.addWidget(self.timer_button,5,1)
-        self.setLayout(self.layout)
+#        self.layout.addWidget(qp,6,1)
         
     def update_temperature(self):
         self.temp_set.display(str(self.temp_dial.sliderPosition()))
-    
+        Temp=temp_operation(self)
+        
     def maintain_temperature(self):
         Temp=temp_operation(self.temp_dial.sliderPosition(),self)
+        Temp.isRunning=False
+        time.sleep(1)
         if Temp.isRunning==False:
             Temp.isRunning=True
             Temp.display_update.connect(self.temp_display.display)
@@ -99,10 +110,10 @@ class Window(QWidget):
 class temp_operation(QThread):
     display_update=pyqtSignal(int)
     
-    def __init__(self, set_temp,parent=None):
+    def __init__(self,parent=None):
         '''Setting up the thread'''
         QThread.__init__(self, parent=parent)
-        self.set_temp=set_temp
+        self.set_temp=0
         self.isRunning=False
     def run(self):
         '''run the thread to maintain constant internal temperature'''
@@ -121,11 +132,10 @@ class temp_operation(QThread):
             #update the display with the current temperature
             self.display_update.emit(current_temperature)
             delta=past_time-start_time
-            [ut,ui,error]=pid.calculate(self.set_temp,current_temperature,delta)
+            [ut,ui,error]=pid.calculate(self.set_temp,current_temperature,delta,ui,error)
             time.sleep(1)
             past_time=time.time()
             print(ut)
-            
     
 if __name__=='__main__':
     app = QApplication(sys.argv)
