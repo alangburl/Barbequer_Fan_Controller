@@ -96,23 +96,28 @@ class Window(QWidget):
         
     def update_temperature(self):
         self.temp_set.display(str(self.temp_dial.sliderPosition()))
-        Temp=temp_operation(self)
-        
+        try:
+            self.Temp.stop()
+        except:
+            '''do nothing here'''
+
     def maintain_temperature(self):
-        Temp=temp_operation(self.temp_dial.sliderPosition(),self)
-        Temp.isRunning=False
+        self.Temp=temp_operation(self)
+        self.Temp.isRunning=False
         time.sleep(1)
-        if Temp.isRunning==False:
-            Temp.isRunning=True
-            Temp.display_update.connect(self.temp_display.display)
-            Temp.start()
+        if self.Temp.isRunning==False:
+            self.Temp.isRunning=True
+            self.Temp.set_temp=self.temp_dial.sliderPosition()
+            self.Temp.display_update.connect(self.temp_display.display)
+            self.Temp.start()
+            print(self.Temp.isRunning)
         
 class temp_operation(QThread):
     display_update=pyqtSignal(int)
     
     def __init__(self,parent=None):
         '''Setting up the thread'''
-        QThread.__init__(self, parent=parent)
+        QThread.__init__(self,parent=parent)
         self.set_temp=0
         self.isRunning=False
     def run(self):
@@ -137,6 +142,12 @@ class temp_operation(QThread):
             past_time=time.time()
             print(ut)
     
+    def stop(self):
+        '''stop the thread
+        '''
+        self.isRunning=False
+        
+        
 if __name__=='__main__':
     app = QApplication(sys.argv)
     ex = Window()
