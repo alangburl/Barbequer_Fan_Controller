@@ -1,9 +1,9 @@
 #Error calculation from PID controller
 def calculate(desired,actual,DT,ui_past=0,error_past=0):
     '''calculate pid controller''' 
-    ki=0.001
-    kd=.01
-    kp=.01                   
+    ki=0.1
+    kd=.001
+    kp=.1                   
     uimax=10
     error= actual-desired
     up=error*kp
@@ -17,5 +17,6 @@ def calculate(desired,actual,DT,ui_past=0,error_past=0):
         
     ud=kd*(error-error_past)/DT
     error_past=error
-    ut=up+ui+ud
+    ut=up-ui+ud
+    print('ui:{0} up{1} ud{2} error{3} ut:{4}'.format(ui,up,ud,error,ut))
     return ut,ui,error
